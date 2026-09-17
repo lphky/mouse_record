@@ -1,0 +1,2383 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>滑鼠小達人訓練場</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --slate: #0f172a;
+      --muted: #64748b;
+      --line: #dbeafe;
+      --green: #16a34a;
+      --orange: #f97316;
+      --purple: #7c3aed;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
+      color: #1f2937;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.20), transparent 26%),
+        radial-gradient(circle at 85% 18%, rgba(250, 204, 21, 0.20), transparent 25%),
+        radial-gradient(circle at 72% 82%, rgba(167, 139, 250, 0.17), transparent 28%),
+        linear-gradient(135deg, #e0f2fe, #fef3c7);
+      background-size: 115% 115%;
+      animation: backgroundFloat 12s ease-in-out infinite alternate;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 980px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(255,255,255,0.85);
+      border-radius: 26px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
+      backdrop-filter: blur(10px);
+      animation: containerIn 0.55s ease-out both;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 2rem;
+      color: var(--slate);
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin-bottom: 20px;
+      text-align: center;
+      color: #475569;
+    }
+
+    .student-panel {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: end;
+      gap: 12px;
+      margin: 0 auto 16px;
+      padding: 14px 16px;
+      background: linear-gradient(180deg, #f8fbff, #f1f5f9);
+      border: 2px solid #dbeafe;
+      border-radius: 18px;
+      transition: opacity .2s, filter .2s, box-shadow .2s;
+    }
+
+    .student-panel.locked {
+      opacity: .78;
+      filter: saturate(.8);
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, .12);
+    }
+
+    .student-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 150px;
+      font-weight: 800;
+      color: #334155;
+    }
+
+    .student-field input {
+      width: 100%;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 700;
+      color: #0f172a;
+      background: white;
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+
+    .student-field input:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, .12);
+    }
+
+    .student-field input:disabled {
+      color: #475569;
+      background: #e2e8f0;
+      cursor: not-allowed;
+    }
+
+    .privacy-note {
+      flex-basis: 100%;
+      margin-top: -2px;
+      text-align: center;
+      color: #64748b;
+      font-size: .86rem;
+    }
+
+    .identity-error {
+      flex-basis: 100%;
+      min-height: 1.1em;
+      margin-top: -3px;
+      text-align: center;
+      color: #b91c1c;
+      font-size: .9rem;
+      font-weight: 800;
+    }
+
+    .control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .info-box {
+      min-width: 110px;
+      padding: 10px 16px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 5px 12px rgba(15, 23, 42, 0.05);
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+
+    #scoreInfo.score-pop {
+      animation: scorePop 0.42s cubic-bezier(.2,.9,.25,1.3);
+      border-color: #60a5fa;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.18);
+    }
+
+    #timeInfo.danger {
+      color: #b91c1c;
+      border-color: #fca5a5;
+      background: #fff7f7;
+      box-shadow: 0 7px 22px rgba(220, 38, 38, 0.14);
+    }
+
+    #timeInfo.timer-pulse {
+      animation: timerPulse 0.48s ease;
+    }
+
+    select, button {
+      padding: 10px 14px;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: 2px solid #cbd5e1;
+      background: white;
+      cursor: pointer;
+    }
+
+    select:focus-visible,
+    button:focus-visible {
+      outline: 3px solid rgba(59, 130, 246, 0.28);
+      outline-offset: 2px;
+    }
+
+    button {
+      border: none;
+      color: white;
+      font-weight: 800;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      box-shadow: 0 7px 14px rgba(37, 99, 235, 0.22);
+      transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 18px rgba(37, 99, 235, 0.28);
+      filter: brightness(1.03);
+    }
+
+    button:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+      filter: none;
+    }
+
+    .leaderboard-btn {
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      box-shadow: 0 7px 14px rgba(234, 88, 12, 0.20);
+    }
+
+    .leaderboard-btn:hover {
+      box-shadow: 0 10px 18px rgba(234, 88, 12, 0.27);
+    }
+
+    .leaderboard-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, .56);
+      backdrop-filter: blur(7px);
+    }
+
+    .leaderboard-overlay.show {
+      display: flex;
+      animation: resultBackdrop .22s ease both;
+    }
+
+    .leaderboard-modal {
+      width: min(620px, 96vw);
+      max-height: min(760px, 92vh);
+      overflow: auto;
+      padding: 22px;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(251,191,36,.18), transparent 32%),
+        #ffffff;
+      border: 2px solid rgba(255,255,255,.95);
+      border-radius: 26px;
+      box-shadow: 0 30px 80px rgba(15, 23, 42, .35);
+      animation: resultCardIn .38s cubic-bezier(.15,.85,.2,1.15) both;
+    }
+
+    .leaderboard-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .leaderboard-title-wrap {
+      min-width: 0;
+    }
+
+    .leaderboard-title {
+      margin: 0;
+      color: #0f172a;
+      font-size: 1.75rem;
+      font-weight: 1000;
+    }
+
+    .leaderboard-subtitle {
+      margin-top: 3px;
+      color: #64748b;
+      font-size: .9rem;
+    }
+
+    .leaderboard-close {
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      color: #334155;
+      font-size: 1.35rem;
+      background: #f1f5f9;
+      box-shadow: none;
+      border-radius: 50%;
+    }
+
+    .leaderboard-close:hover {
+      color: #0f172a;
+      background: #e2e8f0;
+      box-shadow: none;
+    }
+
+    .leaderboard-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 14px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+    }
+
+    .leaderboard-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+      color: #475569;
+      font-size: .88rem;
+      font-weight: 800;
+    }
+
+    .leaderboard-field select {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .leaderboard-refresh {
+      white-space: nowrap;
+    }
+
+    .leaderboard-status {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      color: #64748b;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .leaderboard-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .leader-row {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .leader-row:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(15,23,42,.07);
+    }
+
+    .leader-row.top-1 {
+      background: linear-gradient(135deg, #fff7cc, #fffdf3);
+      border-color: #facc15;
+    }
+
+    .leader-row.top-2 {
+      background: linear-gradient(135deg, #f1f5f9, #ffffff);
+      border-color: #cbd5e1;
+    }
+
+    .leader-row.top-3 {
+      background: linear-gradient(135deg, #ffedd5, #fffaf5);
+      border-color: #fdba74;
+    }
+
+    .leader-rank {
+      font-size: 1.25rem;
+      font-weight: 1000;
+      text-align: center;
+    }
+
+    .leader-student {
+      min-width: 0;
+      color: #1e293b;
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .leader-score {
+      color: #2563eb;
+      font-size: 1.22rem;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .leaderboard-note {
+      margin: 14px 2px 0;
+      padding-top: 12px;
+      color: #64748b;
+      font-size: .82rem;
+      line-height: 1.55;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    #gameArea {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      overflow: hidden;
+      user-select: none;
+      touch-action: none;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(219, 234, 254, 0.3), transparent 50%),
+        #ffffff;
+      border: 4px dashed #93c5fd;
+      border-radius: 24px;
+      isolation: isolate;
+      transition: box-shadow 0.35s, border-color 0.35s;
+    }
+
+    #gameArea.playing {
+      border-color: #60a5fa;
+      box-shadow: inset 0 0 45px rgba(59, 130, 246, 0.06);
+    }
+
+    #gameArea::before {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.55;
+      background:
+        linear-gradient(90deg, transparent 49.7%, rgba(147, 197, 253, .10) 50%, transparent 50.3%),
+        linear-gradient(0deg, transparent 49.7%, rgba(147, 197, 253, .10) 50%, transparent 50.3%);
+      background-size: 80px 80px;
+      animation: gridDrift 18s linear infinite;
+    }
+
+    #target {
+      position: absolute;
+      z-index: 3;
+      display: none;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fde68a, #f97316);
+      border: 4px solid #ea580c;
+      cursor: pointer;
+      box-shadow:
+        0 10px 20px rgba(249, 115, 22, 0.30),
+        inset 0 4px 6px rgba(255,255,255,.36);
+      transform: scale(1);
+      transition: filter .15s, box-shadow .15s;
+      will-change: transform, left, top;
+    }
+
+    #target::after {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border: 3px solid rgba(255,255,255,.72);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    #target.spawn {
+      animation: targetSpawn 0.30s cubic-bezier(.2,.9,.2,1.35);
+    }
+
+    #target.hit {
+      animation: targetHit 0.18s ease-out;
+    }
+
+    #target:active {
+      transform: scale(0.88);
+    }
+
+    #dragItem {
+      position: absolute;
+      z-index: 4;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 900;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+      border: 4px solid #1d4ed8;
+      cursor: grab;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.30);
+      transition: transform .18s, box-shadow .18s, filter .18s;
+      will-change: transform, left, top;
+    }
+
+    #dragItem.spawn {
+      animation: dragSpawn 0.35s cubic-bezier(.2,.9,.25,1.25);
+    }
+
+    #dragItem.dragging {
+      cursor: grabbing;
+      transform: scale(1.13) rotate(4deg);
+      filter: saturate(1.15);
+      box-shadow: 0 18px 32px rgba(37, 99, 235, 0.36);
+    }
+
+    #dragItem.success {
+      animation: dragSuccess 0.42s ease both;
+    }
+
+    #dropZone {
+      position: absolute;
+      z-index: 2;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      text-align: center;
+      color: #166534;
+      font-weight: 800;
+      border-radius: 22px;
+      border: 4px dashed #16a34a;
+      background: rgba(187, 247, 208, 0.55);
+      box-shadow: inset 0 0 22px rgba(34, 197, 94, .08);
+      transition: transform .18s, background .18s, box-shadow .18s;
+    }
+
+    #dropZone.near {
+      transform: scale(1.05);
+      background: rgba(134, 239, 172, 0.62);
+      box-shadow: 0 0 0 8px rgba(34,197,94,.08), inset 0 0 24px rgba(34, 197, 94, .14);
+    }
+
+    #dropZone.success {
+      animation: zoneSuccess 0.55s ease;
+    }
+
+    #rightClickBox {
+      position: absolute;
+      z-index: 3;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      text-align: center;
+      color: #4c1d95;
+      font-weight: 800;
+      border-radius: 24px;
+      border: 4px solid #7c3aed;
+      background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+      cursor: context-menu;
+      box-shadow: 0 10px 22px rgba(124, 58, 237, 0.25);
+    }
+
+    #rightClickBox.spawn {
+      animation: rightBoxSpawn .36s cubic-bezier(.2,.9,.25,1.25);
+    }
+
+    #rightClickBox.context-hit {
+      animation: contextHit .30s ease;
+    }
+
+    #taskCard {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      z-index: 4;
+      display: none;
+      max-width: calc(100% - 32px);
+      padding: 10px 16px;
+      text-align: center;
+      font-weight: 800;
+      color: #92400e;
+      background: #fffbeb;
+      border: 2px solid #f59e0b;
+      border-radius: 16px;
+      box-shadow: 0 6px 14px rgba(245, 158, 11, 0.18);
+      transform: translateX(-50%);
+    }
+
+    #taskCard.task-pop {
+      animation: taskPop .38s ease;
+    }
+
+    #customMenu {
+      position: absolute;
+      z-index: 10;
+      display: none;
+      width: 180px;
+      overflow: hidden;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 14px;
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22);
+      transform-origin: top left;
+    }
+
+    #customMenu.menu-open {
+      display: block;
+      animation: menuOpen .18s cubic-bezier(.2,.9,.25,1.2);
+    }
+
+    .menu-item {
+      position: relative;
+      padding: 12px 14px;
+      cursor: pointer;
+      font-size: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      background: white;
+      transition: background .12s, color .12s, padding-left .12s;
+    }
+
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+
+    .menu-item:hover {
+      padding-left: 19px;
+      color: #1d4ed8;
+      font-weight: 800;
+      background: #eff6ff;
+    }
+
+    .menu-item.correct {
+      color: #166534;
+      background: #dcfce7;
+      animation: menuCorrect .35s ease;
+    }
+
+    .menu-item.wrong {
+      color: #991b1b;
+      background: #fee2e2;
+      animation: wrongShake .36s ease;
+    }
+
+    .message {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+      color: #334155;
+      pointer-events: none;
+    }
+
+    .message h2 {
+      margin: 0 0 12px;
+      color: #0f172a;
+      font-size: 2rem;
+    }
+
+    .message p {
+      max-width: 620px;
+      margin: 8px 0;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .message.result-mode {
+      z-index: 20;
+      background: rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(5px);
+      animation: resultBackdrop .35s ease both;
+    }
+
+    .result-card {
+      width: min(460px, 92%);
+      padding: 28px 26px 26px;
+      color: #0f172a;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(251, 191, 36, .22), transparent 36%),
+        linear-gradient(180deg, #ffffff, #f8fafc);
+      border: 2px solid rgba(255,255,255,.95);
+      border-radius: 28px;
+      box-shadow: 0 28px 70px rgba(15, 23, 42, .30);
+      animation: resultCardIn .62s cubic-bezier(.15,.85,.2,1.22) both;
+    }
+
+    .result-emoji {
+      margin-bottom: 4px;
+      font-size: 2.35rem;
+      animation: trophyBounce .75s .15s both;
+    }
+
+    .result-title {
+      margin: 0;
+      font-size: clamp(1.7rem, 4vw, 2.25rem);
+      font-weight: 900;
+      letter-spacing: .03em;
+    }
+
+    .result-mode-name {
+      margin-top: 7px;
+      color: #64748b;
+      font-size: .98rem;
+      font-weight: 700;
+    }
+
+    .result-stars {
+      min-height: 42px;
+      margin: 10px 0 2px;
+      font-size: 2rem;
+      letter-spacing: 6px;
+    }
+
+    .result-stars span {
+      display: inline-block;
+      opacity: 0;
+      transform: scale(.2) rotate(-25deg);
+      animation: starIn .42s cubic-bezier(.15,.9,.22,1.35) forwards;
+    }
+
+    .result-stars span:nth-child(2) { animation-delay: .12s; }
+    .result-stars span:nth-child(3) { animation-delay: .24s; }
+
+    .score-caption {
+      margin-top: 4px;
+      color: #64748b;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .final-score-wrap {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px;
+      margin: -2px 0 2px;
+    }
+
+    #finalScore {
+      display: inline-block;
+      min-width: 1.25em;
+      font-size: clamp(5rem, 16vw, 8.5rem);
+      line-height: .98;
+      font-weight: 1000;
+      letter-spacing: -.06em;
+      color: transparent;
+      background: linear-gradient(135deg, #2563eb 10%, #7c3aed 52%, #f59e0b 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      filter: drop-shadow(0 8px 12px rgba(37,99,235,.18));
+    }
+
+    #finalScore.finish-pop {
+      animation: finalScorePop .58s cubic-bezier(.16,.88,.24,1.35);
+    }
+
+    .score-unit {
+      color: #475569;
+      font-size: 1.2rem;
+      font-weight: 900;
+    }
+
+    .result-comment {
+      margin: 12px auto 0;
+      max-width: 370px;
+      color: #334155;
+      font-size: 1.05rem;
+      line-height: 1.55;
+      font-weight: 700;
+    }
+
+    .result-student {
+      margin-top: 8px;
+      color: #475569;
+      font-size: .98rem;
+      font-weight: 800;
+    }
+
+    .submit-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      margin-top: 13px;
+      padding: 7px 13px;
+      color: #1e3a8a;
+      font-size: .94rem;
+      font-weight: 900;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+    }
+
+    .submit-status.sent {
+      color: #166534;
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .submit-status.failed {
+      color: #991b1b;
+      background: #fff1f2;
+      border-color: #fecdd3;
+    }
+
+    .result-hint {
+      margin-top: 14px;
+      color: #64748b;
+      font-size: .9rem;
+    }
+
+    .feedback {
+      min-height: 30px;
+      margin-top: 14px;
+      text-align: center;
+      color: #0f766e;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .feedback.feedback-pop {
+      animation: feedbackPop .32s ease;
+    }
+
+    .fx-ripple {
+      position: absolute;
+      z-index: 12;
+      width: 28px;
+      height: 28px;
+      margin: -14px 0 0 -14px;
+      border: 4px solid rgba(37, 99, 235, .65);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: ripple .52s ease-out forwards;
+    }
+
+    .fx-plus {
+      position: absolute;
+      z-index: 13;
+      color: #16a34a;
+      font-size: 1.45rem;
+      font-weight: 1000;
+      text-shadow: 0 2px 7px rgba(255,255,255,.9);
+      pointer-events: none;
+      animation: plusFloat .75s ease-out forwards;
+    }
+
+    .confetti {
+      position: absolute;
+      z-index: 22;
+      top: -24px;
+      width: 10px;
+      height: 16px;
+      border-radius: 3px;
+      pointer-events: none;
+      animation: confettiFall var(--duration) cubic-bezier(.1,.65,.25,1) var(--delay) forwards;
+    }
+
+    .wrong-bump {
+      animation: wrongShake .36s ease;
+    }
+
+    @keyframes backgroundFloat {
+      from { background-position: 0% 0%; }
+      to { background-position: 8% 5%; }
+    }
+
+    @keyframes containerIn {
+      from { opacity: 0; transform: translateY(16px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes gridDrift {
+      from { transform: translate3d(0, 0, 0); }
+      to { transform: translate3d(80px, 80px, 0); }
+    }
+
+    @keyframes scorePop {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.12) rotate(-1deg); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes timerPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.09); }
+    }
+
+    @keyframes targetSpawn {
+      0% { opacity: 0; transform: scale(.35) rotate(-10deg); }
+      75% { opacity: 1; transform: scale(1.12) rotate(2deg); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes targetHit {
+      0% { transform: scale(1); filter: brightness(1); }
+      55% { transform: scale(.72); filter: brightness(1.35); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+
+    @keyframes dragSpawn {
+      from { opacity: 0; transform: scale(.5) rotate(-18deg); }
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    @keyframes dragSuccess {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.22) rotate(14deg); filter: brightness(1.18); }
+      100% { transform: scale(.2) rotate(30deg); opacity: .1; }
+    }
+
+    @keyframes zoneSuccess {
+      0%, 100% { transform: scale(1); }
+      40% { transform: scale(1.09); background: rgba(134, 239, 172, .82); box-shadow: 0 0 0 12px rgba(34,197,94,.12); }
+    }
+
+    @keyframes rightBoxSpawn {
+      from { opacity: 0; transform: scale(.7) rotate(-2deg); }
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    @keyframes contextHit {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.06); box-shadow: 0 0 0 10px rgba(124,58,237,.10); }
+    }
+
+    @keyframes taskPop {
+      0% { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(.95); }
+      100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    @keyframes menuOpen {
+      from { opacity: 0; transform: scale(.78) translateY(-5px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes menuCorrect {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.045); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes wrongShake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-7px); }
+      50% { transform: translateX(6px); }
+      75% { transform: translateX(-3px); }
+    }
+
+    @keyframes feedbackPop {
+      0% { transform: translateY(4px) scale(.98); opacity: .55; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    @keyframes ripple {
+      from { opacity: .8; transform: scale(.5); }
+      to { opacity: 0; transform: scale(3.2); }
+    }
+
+    @keyframes plusFloat {
+      0% { opacity: 0; transform: translate(-50%, 4px) scale(.7); }
+      25% { opacity: 1; transform: translate(-50%, -4px) scale(1.18); }
+      100% { opacity: 0; transform: translate(-50%, -54px) scale(.92); }
+    }
+
+    @keyframes resultBackdrop {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes resultCardIn {
+      0% { opacity: 0; transform: translateY(28px) scale(.82); }
+      70% { opacity: 1; transform: translateY(-5px) scale(1.025); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes trophyBounce {
+      0% { opacity: 0; transform: translateY(-18px) scale(.55) rotate(-12deg); }
+      65% { opacity: 1; transform: translateY(4px) scale(1.16) rotate(5deg); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+    }
+
+    @keyframes starIn {
+      0% { opacity: 0; transform: scale(.2) rotate(-25deg); }
+      70% { opacity: 1; transform: scale(1.24) rotate(8deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    @keyframes finalScorePop {
+      0% { transform: scale(1); }
+      42% { transform: scale(1.26) rotate(-2deg); }
+      72% { transform: scale(.96) rotate(1deg); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes confettiFall {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, -20px, 0) rotate(0deg);
+      }
+      10% { opacity: 1; }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--drift), 570px, 0) rotate(var(--spin));
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+        align-items: flex-start;
+      }
+
+      .container {
+        padding: 16px 12px;
+        border-radius: 20px;
+      }
+
+      h1 {
+        font-size: 1.55rem;
+      }
+
+      .subtitle {
+        font-size: .92rem;
+      }
+
+      #gameArea {
+        height: 420px;
+      }
+
+      .info-box {
+        min-width: 95px;
+        padding: 9px 12px;
+        font-size: 1rem;
+      }
+
+      .student-panel {
+        align-items: stretch;
+      }
+
+      .student-field {
+        flex: 1 1 135px;
+        min-width: 135px;
+      }
+
+      .leaderboard-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .leaderboard-refresh {
+        width: 100%;
+      }
+
+      .leaderboard-modal {
+        padding: 16px 12px;
+      }
+
+      .leader-row {
+        grid-template-columns: 42px 1fr auto;
+        padding: 9px 10px;
+      }
+
+      select, button {
+        font-size: .94rem;
+      }
+
+      #customMenu {
+        width: 160px;
+      }
+
+      .result-card {
+        padding: 22px 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h1>滑鼠小達人訓練場</h1>
+    <div class="subtitle">練習移動滑鼠、準確點擊、雙擊、拖拉控制和右鍵選單操作</div>
+
+    <section class="student-panel" id="studentPanel">
+      <label class="student-field">
+        <span>班別</span>
+        <input
+          id="studentClass"
+          type="text"
+          maxlength="20"
+          autocomplete="off"
+          placeholder="例如：1A"
+          aria-label="班別"
+        />
+      </label>
+
+      <label class="student-field">
+        <span>學號</span>
+        <input
+          id="studentNo"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="3"
+          autocomplete="off"
+          placeholder="例如：07"
+          aria-label="學號"
+        />
+      </label>
+
+      <label class="student-field">
+        <span>姓名</span>
+        <input
+          id="studentName"
+          type="text"
+          maxlength="30"
+          autocomplete="name"
+          placeholder="例如：陳大文"
+          aria-label="姓名"
+        />
+      </label>
+
+      <div class="privacy-note">會提交：班別、學號、姓名、遊戲模式、難度及分數。姓名只儲存在私人 Google Sheet，不會顯示於公開龍虎榜。</div>
+      <div class="identity-error" id="identityError" aria-live="polite"></div>
+    </section>
+
+    <section class="control-panel">
+      <div class="info-box" id="scoreInfo">分數：<span id="score">0</span></div>
+      <div class="info-box" id="timeInfo">時間：<span id="time">30</span> 秒</div>
+
+      <label>
+        模式：
+        <select id="mode">
+          <option value="click" selected>點擊目標</option>
+          <option value="doubleClick">雙擊目標</option>
+          <option value="drag">拖拉物件</option>
+          <option value="rightClick">右鍵選單</option>
+          <option value="challenge">挑戰模式：隨機任務</option>
+        </select>
+      </label>
+
+      <label>
+        難度：
+        <select id="difficulty">
+          <option value="easy">簡單</option>
+          <option value="normal" selected>普通</option>
+          <option value="hard">困難</option>
+        </select>
+      </label>
+
+      <button id="startBtn">開始練習</button>
+      <button id="resetBtn" disabled>重新開始</button>
+      <button id="leaderboardBtn" class="leaderboard-btn" type="button">🏆 龍虎榜</button>
+    </section>
+
+    <section id="gameArea">
+      <div id="target" aria-label="點擊目標"></div>
+      <div id="dropZone">放到這裡</div>
+      <div id="dragItem">★</div>
+      <div id="taskCard"></div>
+      <div id="rightClickBox">在這裡<br>按右鍵</div>
+      <div id="customMenu"></div>
+
+      <div id="message" class="message" aria-live="polite">
+        <h2>準備好了嗎？</h2>
+        <p>選擇練習模式後，按下「開始練習」。你可以練習點擊、雙擊、拖拉，也可以練習右鍵選單操作。</p>
+      </div>
+    </section>
+
+    <div id="feedback" class="feedback" aria-live="polite"></div>
+
+    <div id="leaderboardOverlay" class="leaderboard-overlay" aria-hidden="true">
+      <section class="leaderboard-modal" role="dialog" aria-modal="true" aria-labelledby="leaderboardTitle">
+        <div class="leaderboard-head">
+          <div class="leaderboard-title-wrap">
+            <h2 class="leaderboard-title" id="leaderboardTitle">🏆 Mouse Master 龍虎榜</h2>
+            <div class="leaderboard-subtitle">每位同學只計同一模式及難度的最高分</div>
+          </div>
+          <button id="leaderboardClose" class="leaderboard-close" type="button" aria-label="關閉龍虎榜">×</button>
+        </div>
+
+        <div class="leaderboard-controls">
+          <label class="leaderboard-field">
+            <span>模式</span>
+            <select id="leaderboardMode">
+              <option value="click">點擊目標</option>
+              <option value="doubleClick">雙擊目標</option>
+              <option value="drag">拖拉物件</option>
+              <option value="rightClick">右鍵選單</option>
+              <option value="challenge">挑戰模式</option>
+            </select>
+          </label>
+
+          <label class="leaderboard-field">
+            <span>難度</span>
+            <select id="leaderboardDifficulty">
+              <option value="easy">簡單</option>
+              <option value="normal">普通</option>
+              <option value="hard">困難</option>
+            </select>
+          </label>
+
+          <button id="leaderboardRefresh" class="leaderboard-refresh" type="button">重新整理</button>
+        </div>
+
+        <div id="leaderboardStatus" class="leaderboard-status">按「龍虎榜」後會載入最新排名。</div>
+        <div id="leaderboardList" class="leaderboard-list"></div>
+
+        <div class="leaderboard-note">
+          公開榜不會讀取或顯示完整 Google Sheet。姓名不會公開；學號預設會遮罩，例如 07 顯示為 0*。
+          Timestamp、姓名及其他原始紀錄不會傳送到公開網頁。
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const SCORE_API =
+      "https://script.google.com/macros/s/AKfycby8LIf6tXgKXoT8a8hmejz0MPjuUN73JfWf9hhg3bEjNDivlGMadE5tjjV8mxhL5j09/exec";
+
+    const studentPanel = document.getElementById("studentPanel");
+    const studentClassInput = document.getElementById("studentClass");
+    const studentNoInput = document.getElementById("studentNo");
+    const studentNameInput = document.getElementById("studentName");
+    const identityError = document.getElementById("identityError");
+
+    const scoreDisplay = document.getElementById("score");
+    const timeDisplay = document.getElementById("time");
+    const scoreInfo = document.getElementById("scoreInfo");
+    const timeInfo = document.getElementById("timeInfo");
+    const modeSelect = document.getElementById("mode");
+    const difficultySelect = document.getElementById("difficulty");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const gameArea = document.getElementById("gameArea");
+    const target = document.getElementById("target");
+    const dragItem = document.getElementById("dragItem");
+    const dropZone = document.getElementById("dropZone");
+    const rightClickBox = document.getElementById("rightClickBox");
+    const customMenu = document.getElementById("customMenu");
+    const taskCard = document.getElementById("taskCard");
+    const message = document.getElementById("message");
+    const feedback = document.getElementById("feedback");
+
+    const leaderboardBtn = document.getElementById("leaderboardBtn");
+    const leaderboardOverlay = document.getElementById("leaderboardOverlay");
+    const leaderboardClose = document.getElementById("leaderboardClose");
+    const leaderboardMode = document.getElementById("leaderboardMode");
+    const leaderboardDifficulty = document.getElementById("leaderboardDifficulty");
+    const leaderboardRefresh = document.getElementById("leaderboardRefresh");
+    const leaderboardStatus = document.getElementById("leaderboardStatus");
+    const leaderboardList = document.getElementById("leaderboardList");
+
+    let score = 0;
+    let timeLeft = 30;
+    let timer = null;
+    let isPlaying = false;
+    let currentMode = "click";
+    let gameStudentClass = "";
+    let gameStudentNo = "";
+    let gameStudentName = "";
+    let gameDifficulty = "normal";
+    let scoreSubmitted = false;
+
+    let targetSize = 60;
+    let doubleClickTargetSize = 70;
+    let dragSize = 70;
+    let dropSize = 120;
+    let rightClickBoxSize = 150;
+
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let activePointerId = null;
+
+    let correctMenuAction = "";
+    let challengeTask = "click";
+
+    const menuActions = ["開啟", "複製", "重新命名", "刪除", "內容"];
+
+    const difficultySettings = {
+      easy: {
+        clickSize: 80,
+        doubleClickSize: 90,
+        dragSize: 80,
+        dropSize: 150,
+        rightClickBoxSize: 190,
+        menuItemCount: 3,
+        name: "簡單"
+      },
+      normal: {
+        clickSize: 60,
+        doubleClickSize: 70,
+        dragSize: 70,
+        dropSize: 125,
+        rightClickBoxSize: 155,
+        menuItemCount: 4,
+        name: "普通"
+      },
+      hard: {
+        clickSize: 42,
+        doubleClickSize: 52,
+        dragSize: 58,
+        dropSize: 100,
+        rightClickBoxSize: 120,
+        menuItemCount: 5,
+        name: "困難"
+      }
+    };
+
+    const modeNames = {
+      click: "點擊目標",
+      doubleClick: "雙擊目標",
+      drag: "拖拉物件",
+      rightClick: "右鍵選單",
+      challenge: "挑戰模式：隨機任務"
+    };
+
+    function startGame() {
+      const className = studentClassInput.value.trim().toUpperCase();
+      const studentNo = studentNoInput.value.trim();
+      const studentName = studentNameInput.value.trim().replace(/\s+/g, " ");
+
+      if (!/^[1-6][A-Z]$/.test(className)) {
+        identityError.textContent = "請輸入正確班別，例如 1A、2B、6D。";
+        studentClassInput.focus();
+        return;
+      }
+
+      if (!/^\d{1,3}$/.test(studentNo)) {
+        identityError.textContent = "請輸入正確學號（只可輸入數字）。";
+        studentNoInput.focus();
+        return;
+      }
+
+      const studentNoValue = Number(studentNo);
+
+      if (
+        !Number.isInteger(studentNoValue) ||
+        studentNoValue < 1 ||
+        studentNoValue > 50
+      ) {
+        identityError.textContent = "學號必須為 1 至 50。";
+        studentNoInput.focus();
+        return;
+      }
+
+      if (
+        !studentName ||
+        studentName.length > 30 ||
+        /^[=+\-@]/.test(studentName)
+      ) {
+        identityError.textContent = "請輸入正確姓名（最多 30 個字）。";
+        studentNameInput.focus();
+        return;
+      }
+
+      const normalizedStudentNo =
+        String(studentNoValue).padStart(2, "0");
+
+      studentClassInput.value = className;
+      studentNoInput.value = normalizedStudentNo;
+      studentNameInput.value = studentName;
+      identityError.textContent = "";
+
+      gameStudentClass = className;
+      gameStudentNo = normalizedStudentNo;
+      gameStudentName = studentName;
+      gameDifficulty = difficultySelect.value;
+      scoreSubmitted = false;
+
+      const settings = difficultySettings[difficultySelect.value];
+
+      currentMode = modeSelect.value;
+      targetSize = settings.clickSize;
+      doubleClickTargetSize = settings.doubleClickSize;
+      dragSize = settings.dragSize;
+      dropSize = settings.dropSize;
+      rightClickBoxSize = settings.rightClickBoxSize;
+
+      clearInterval(timer);
+      removeEffects();
+
+      score = 0;
+      timeLeft = 30;
+      isPlaying = true;
+      scoreDisplay.textContent = score;
+      timeDisplay.textContent = timeLeft;
+
+      message.classList.remove("result-mode");
+      message.style.display = "none";
+      gameArea.classList.add("playing");
+      timeInfo.classList.remove("danger", "timer-pulse");
+
+      startBtn.disabled = true;
+      resetBtn.disabled = false;
+      difficultySelect.disabled = true;
+      modeSelect.disabled = true;
+      studentClassInput.disabled = true;
+      studentNoInput.disabled = true;
+      studentNameInput.disabled = true;
+      studentPanel.classList.add("locked");
+
+      hideAllGameObjects();
+
+      if (currentMode === "challenge") {
+        startChallengeMode();
+      } else if (currentMode === "click") {
+        startClickMode();
+      } else if (currentMode === "doubleClick") {
+        startDoubleClickMode();
+      } else if (currentMode === "drag") {
+        startDragMode();
+      } else if (currentMode === "rightClick") {
+        startRightClickMode();
+      }
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timeDisplay.textContent = timeLeft;
+        updateTimerVisual();
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function updateTimerVisual() {
+      timeInfo.classList.toggle("danger", timeLeft <= 5);
+
+      if (timeLeft <= 5 && timeLeft > 0) {
+        restartAnimation(timeInfo, "timer-pulse");
+      }
+    }
+
+    function hideAllGameObjects() {
+      target.style.display = "none";
+      dragItem.style.display = "none";
+      dropZone.style.display = "none";
+      rightClickBox.style.display = "none";
+      customMenu.style.display = "none";
+      customMenu.classList.remove("menu-open");
+      taskCard.style.display = "none";
+
+      dragItem.classList.remove("dragging", "success", "spawn");
+      dropZone.classList.remove("near", "success");
+      target.classList.remove("hit", "spawn");
+      rightClickBox.classList.remove("spawn", "context-hit");
+
+      isDragging = false;
+      activePointerId = null;
+    }
+
+    function startClickMode() {
+      setFeedback(currentMode === "challenge" ? "挑戰任務：點擊圓形目標。" : "點擊圓形目標。");
+      target.style.display = "block";
+      target.style.width = targetSize + "px";
+      target.style.height = targetSize + "px";
+      target.style.background = "radial-gradient(circle at 30% 30%, #fde68a, #f97316)";
+      target.style.borderColor = "#ea580c";
+      moveTarget(targetSize);
+    }
+
+    function startDoubleClickMode() {
+      setFeedback(currentMode === "challenge" ? "挑戰任務：請雙擊圓形目標。" : "請雙擊圓形目標。");
+      target.style.display = "block";
+      target.style.width = doubleClickTargetSize + "px";
+      target.style.height = doubleClickTargetSize + "px";
+      target.style.background = "radial-gradient(circle at 30% 30%, #bfdbfe, #2563eb)";
+      target.style.borderColor = "#1d4ed8";
+      moveTarget(doubleClickTargetSize);
+    }
+
+    function moveTarget(size) {
+      const areaWidth = gameArea.clientWidth;
+      const areaHeight = gameArea.clientHeight;
+      const maxX = Math.max(0, areaWidth - size);
+      const maxY = Math.max(0, areaHeight - size);
+      const randomX = Math.floor(Math.random() * (maxX + 1));
+      const randomY = Math.floor(Math.random() * (maxY + 1));
+
+      target.style.left = randomX + "px";
+      target.style.top = randomY + "px";
+      restartAnimation(target, "spawn");
+    }
+
+    function hitTarget(event) {
+      event.stopPropagation();
+
+      const valid =
+        currentMode === "click" ||
+        (currentMode === "challenge" && challengeTask === "click");
+
+      if (!isPlaying || !valid) return;
+
+      successPoint(event.clientX, event.clientY, "做得好！+1 分");
+      restartAnimation(target, "hit");
+
+      window.setTimeout(() => {
+        if (!isPlaying) return;
+
+        if (currentMode === "challenge") {
+          nextChallengeTask();
+        } else {
+          moveTarget(targetSize);
+        }
+      }, 115);
+    }
+
+    function hitDoubleClickTarget(event) {
+      event.stopPropagation();
+
+      const valid =
+        currentMode === "doubleClick" ||
+        (currentMode === "challenge" && challengeTask === "doubleClick");
+
+      if (!isPlaying || !valid) return;
+
+      successPoint(event.clientX, event.clientY, "雙擊成功！+1 分", true);
+      restartAnimation(target, "hit");
+
+      window.setTimeout(() => {
+        if (!isPlaying) return;
+
+        if (currentMode === "challenge") {
+          nextChallengeTask();
+        } else {
+          moveTarget(doubleClickTargetSize);
+        }
+      }, 115);
+    }
+
+    function startDragMode() {
+      setFeedback(currentMode === "challenge"
+        ? "挑戰任務：把藍色星星拖到綠色區域。"
+        : "把藍色星星拖到綠色區域。");
+
+      dragItem.style.display = "flex";
+      dragItem.style.width = dragSize + "px";
+      dragItem.style.height = dragSize + "px";
+
+      dropZone.style.display = "flex";
+      dropZone.style.width = dropSize + "px";
+      dropZone.style.height = dropSize + "px";
+
+      placeDragRound();
+    }
+
+    function placeDragRound() {
+      dragItem.classList.remove("success");
+      dragItem.style.opacity = "1";
+      dropZone.classList.remove("success", "near");
+
+      const areaWidth = gameArea.clientWidth;
+      const areaHeight = gameArea.clientHeight;
+
+      const itemX = randomNumber(20, Math.max(20, Math.floor(areaWidth / 2 - dragSize - 20)));
+      const itemY = randomNumber(60, Math.max(60, areaHeight - dragSize - 20));
+
+      const zoneMinX = Math.min(
+        Math.floor(areaWidth / 2 + 20),
+        Math.max(20, areaWidth - dropSize - 20)
+      );
+      const zoneMaxX = Math.max(zoneMinX, areaWidth - dropSize - 20);
+      const zoneX = randomNumber(zoneMinX, zoneMaxX);
+      const zoneY = randomNumber(60, Math.max(60, areaHeight - dropSize - 20));
+
+      dragItem.style.left = itemX + "px";
+      dragItem.style.top = itemY + "px";
+      dropZone.style.left = zoneX + "px";
+      dropZone.style.top = zoneY + "px";
+
+      restartAnimation(dragItem, "spawn");
+    }
+
+    function startRightClickMode() {
+      setFeedback(currentMode === "challenge"
+        ? "挑戰任務：在紫色方格上按右鍵，然後選擇指定選項。"
+        : "在紫色方格上按右鍵，然後選擇指定選項。");
+
+      rightClickBox.style.display = "flex";
+      rightClickBox.style.width = rightClickBoxSize + "px";
+      rightClickBox.style.height = rightClickBoxSize + "px";
+      taskCard.style.display = "block";
+
+      prepareRightClickRound();
+    }
+
+    function prepareRightClickRound() {
+      customMenu.style.display = "none";
+      customMenu.classList.remove("menu-open");
+
+      const areaWidth = gameArea.clientWidth;
+      const areaHeight = gameArea.clientHeight;
+
+      const boxX = randomNumber(20, Math.max(20, areaWidth - rightClickBoxSize - 20));
+      const boxY = randomNumber(75, Math.max(75, areaHeight - rightClickBoxSize - 20));
+
+      rightClickBox.style.left = boxX + "px";
+      rightClickBox.style.top = boxY + "px";
+
+      const settings = difficultySettings[difficultySelect.value];
+      const availableActions = shuffleArray([...menuActions]).slice(0, settings.menuItemCount);
+      correctMenuAction = availableActions[randomNumber(0, availableActions.length - 1)];
+
+      taskCard.textContent = `請按右鍵，然後選擇：「${correctMenuAction}」`;
+      restartAnimation(taskCard, "task-pop");
+      restartAnimation(rightClickBox, "spawn");
+
+      buildCustomMenu(availableActions);
+    }
+
+    function buildCustomMenu(actions) {
+      customMenu.innerHTML = "";
+
+      actions.forEach(action => {
+        const item = document.createElement("div");
+        item.className = "menu-item";
+        item.textContent = action;
+
+        item.addEventListener("click", event => {
+          event.stopPropagation();
+          chooseMenuAction(action, item);
+        });
+
+        customMenu.appendChild(item);
+      });
+    }
+
+    function showCustomMenu(event) {
+      const valid =
+        currentMode === "rightClick" ||
+        (currentMode === "challenge" && challengeTask === "rightClick");
+
+      if (!isPlaying || !valid) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const areaRect = gameArea.getBoundingClientRect();
+      const menuWidth = window.innerWidth <= 600 ? 160 : 180;
+      const menuHeight = customMenu.children.length * 45;
+
+      let menuX = event.clientX - areaRect.left;
+      let menuY = event.clientY - areaRect.top;
+
+      menuX = Math.max(0, Math.min(menuX, gameArea.clientWidth - menuWidth));
+      menuY = Math.max(0, Math.min(menuY, gameArea.clientHeight - menuHeight));
+
+      customMenu.style.left = menuX + "px";
+      customMenu.style.top = menuY + "px";
+      customMenu.style.display = "block";
+      restartAnimation(customMenu, "menu-open");
+
+      restartAnimation(rightClickBox, "context-hit");
+      createRippleAtClient(event.clientX, event.clientY, "#7c3aed");
+      setFeedback("請在選單中選擇指定項目。");
+    }
+
+    function chooseMenuAction(action, item) {
+      const valid =
+        currentMode === "rightClick" ||
+        (currentMode === "challenge" && challengeTask === "rightClick");
+
+      if (!isPlaying || !valid) return;
+
+      if (action === correctMenuAction) {
+        item.classList.add("correct");
+        item.textContent = "✓ " + action;
+
+        const rect = item.getBoundingClientRect();
+        const areaRect = gameArea.getBoundingClientRect();
+        const fxX = rect.left - areaRect.left + rect.width / 2;
+        const fxY = rect.top - areaRect.top + rect.height / 2;
+
+        addPoint();
+        createPlusOne(fxX, fxY);
+        createRipple(fxX, fxY, "#16a34a");
+        setFeedback("選對了！+1 分");
+
+        window.setTimeout(() => {
+          customMenu.style.display = "none";
+          customMenu.classList.remove("menu-open");
+
+          if (!isPlaying) return;
+
+          if (currentMode === "challenge") {
+            nextChallengeTask();
+          } else {
+            prepareRightClickRound();
+          }
+        }, 260);
+      } else {
+        item.classList.add("wrong");
+        window.setTimeout(() => item.classList.remove("wrong"), 380);
+        setFeedback(`你選了「${action}」，請留意指示要選哪一項。`);
+      }
+    }
+
+    function startChallengeMode() {
+      taskCard.style.display = "block";
+      taskCard.textContent = "挑戰模式：準備隨機任務！";
+      restartAnimation(taskCard, "task-pop");
+      nextChallengeTask();
+    }
+
+    function nextChallengeTask() {
+      hideAllGameObjects();
+
+      const tasks = ["click", "doubleClick", "drag", "rightClick"];
+      challengeTask = tasks[randomNumber(0, tasks.length - 1)];
+
+      if (challengeTask === "click") {
+        taskCard.style.display = "block";
+        taskCard.textContent = "隨機任務：點擊圓形目標";
+        restartAnimation(taskCard, "task-pop");
+        startClickMode();
+      } else if (challengeTask === "doubleClick") {
+        taskCard.style.display = "block";
+        taskCard.textContent = "隨機任務：雙擊圓形目標";
+        restartAnimation(taskCard, "task-pop");
+        startDoubleClickMode();
+      } else if (challengeTask === "drag") {
+        taskCard.style.display = "block";
+        taskCard.textContent = "隨機任務：拖拉星星到綠色區域";
+        restartAnimation(taskCard, "task-pop");
+        startDragMode();
+      } else if (challengeTask === "rightClick") {
+        startRightClickMode();
+      }
+    }
+
+    function startDragging(event) {
+      const valid =
+        currentMode === "drag" ||
+        (currentMode === "challenge" && challengeTask === "drag");
+
+      if (!isPlaying || !valid) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const itemRect = dragItem.getBoundingClientRect();
+      dragOffsetX = event.clientX - itemRect.left;
+      dragOffsetY = event.clientY - itemRect.top;
+
+      isDragging = true;
+      activePointerId = event.pointerId;
+      dragItem.classList.add("dragging");
+
+      if (dragItem.setPointerCapture) {
+        try { dragItem.setPointerCapture(event.pointerId); } catch (_) {}
+      }
+
+      setFeedback("保持按住，拖到綠色區域。");
+    }
+
+    function dragging(event) {
+      const valid =
+        currentMode === "drag" ||
+        (currentMode === "challenge" && challengeTask === "drag");
+
+      if (!isDragging || !isPlaying || !valid) return;
+      if (activePointerId !== null && event.pointerId !== activePointerId) return;
+
+      event.preventDefault();
+
+      const areaRect = gameArea.getBoundingClientRect();
+      let newX = event.clientX - areaRect.left - dragOffsetX;
+      let newY = event.clientY - areaRect.top - dragOffsetY;
+
+      newX = Math.max(0, Math.min(newX, gameArea.clientWidth - dragSize));
+      newY = Math.max(0, Math.min(newY, gameArea.clientHeight - dragSize));
+
+      dragItem.style.left = newX + "px";
+      dragItem.style.top = newY + "px";
+
+      dropZone.classList.toggle("near", isInsideDropZone());
+    }
+
+    function stopDragging(event) {
+      const valid =
+        currentMode === "drag" ||
+        (currentMode === "challenge" && challengeTask === "drag");
+
+      if (!isDragging || !isPlaying || !valid) return;
+      if (event && activePointerId !== null && event.pointerId !== activePointerId) return;
+
+      isDragging = false;
+      activePointerId = null;
+      dragItem.classList.remove("dragging");
+      dropZone.classList.remove("near");
+
+      if (isInsideDropZone()) {
+        const zoneRect = dropZone.getBoundingClientRect();
+        const areaRect = gameArea.getBoundingClientRect();
+        const fxX = zoneRect.left - areaRect.left + zoneRect.width / 2;
+        const fxY = zoneRect.top - areaRect.top + zoneRect.height / 2;
+
+        addPoint();
+        createPlusOne(fxX, fxY);
+        createRipple(fxX, fxY, "#16a34a");
+
+        dragItem.classList.add("success");
+        dropZone.classList.add("success");
+        setFeedback("成功拖入目標區！+1 分");
+
+        window.setTimeout(() => {
+          if (!isPlaying) return;
+
+          if (currentMode === "challenge") {
+            nextChallengeTask();
+          } else {
+            placeDragRound();
+          }
+        }, 390);
+      } else {
+        restartAnimation(dragItem, "wrong-bump");
+        setFeedback("差一點！放開時要在綠色區域內。");
+      }
+    }
+
+    function isInsideDropZone() {
+      const itemRect = dragItem.getBoundingClientRect();
+      const zoneRect = dropZone.getBoundingClientRect();
+      const itemCenterX = itemRect.left + itemRect.width / 2;
+      const itemCenterY = itemRect.top + itemRect.height / 2;
+
+      return (
+        itemCenterX >= zoneRect.left &&
+        itemCenterX <= zoneRect.right &&
+        itemCenterY >= zoneRect.top &&
+        itemCenterY <= zoneRect.bottom
+      );
+    }
+
+    function handleGameAreaClick() {
+      if (!isPlaying) return;
+
+      if (currentMode === "click" || (currentMode === "challenge" && challengeTask === "click")) {
+        setFeedback("差一點！請瞄準圓形目標。");
+      }
+
+      if (currentMode === "doubleClick" || (currentMode === "challenge" && challengeTask === "doubleClick")) {
+        setFeedback("請在藍色圓形目標上連續雙擊。");
+      }
+
+      if (currentMode === "rightClick" || (currentMode === "challenge" && challengeTask === "rightClick")) {
+        customMenu.style.display = "none";
+        customMenu.classList.remove("menu-open");
+        setFeedback("請在紫色方格上按右鍵。");
+      }
+    }
+
+    function successPoint(clientX, clientY, text, doubleRipple = false) {
+      addPoint();
+
+      const rect = gameArea.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      createPlusOne(x, y);
+      createRipple(x, y, doubleRipple ? "#2563eb" : "#f97316");
+
+      if (doubleRipple) {
+        window.setTimeout(() => createRipple(x, y, "#60a5fa"), 90);
+      }
+
+      setFeedback(text);
+    }
+
+    function addPoint() {
+      score++;
+      scoreDisplay.textContent = score;
+      restartAnimation(scoreInfo, "score-pop");
+    }
+
+    function setFeedback(text) {
+      feedback.textContent = text;
+      restartAnimation(feedback, "feedback-pop");
+    }
+
+    function createRippleAtClient(clientX, clientY, color) {
+      const rect = gameArea.getBoundingClientRect();
+      createRipple(clientX - rect.left, clientY - rect.top, color);
+    }
+
+    function createRipple(x, y, color) {
+      const ripple = document.createElement("div");
+      ripple.className = "fx-ripple";
+      ripple.style.left = x + "px";
+      ripple.style.top = y + "px";
+      ripple.style.borderColor = color;
+      gameArea.appendChild(ripple);
+
+      window.setTimeout(() => ripple.remove(), 560);
+    }
+
+    function createPlusOne(x, y) {
+      const plus = document.createElement("div");
+      plus.className = "fx-plus";
+      plus.textContent = "+1";
+      plus.style.left = x + "px";
+      plus.style.top = y + "px";
+      gameArea.appendChild(plus);
+
+      window.setTimeout(() => plus.remove(), 780);
+    }
+
+    function openLeaderboard() {
+      leaderboardMode.value = modeSelect.value;
+      leaderboardDifficulty.value = difficultySelect.value;
+
+      leaderboardOverlay.classList.add("show");
+      leaderboardOverlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+
+      loadLeaderboard();
+    }
+
+
+    function closeLeaderboard() {
+      leaderboardOverlay.classList.remove("show");
+      leaderboardOverlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+
+    function loadLeaderboard() {
+      const mode = leaderboardMode.value;
+      const difficulty = leaderboardDifficulty.value;
+
+      leaderboardStatus.textContent = "正在載入龍虎榜…";
+      leaderboardList.innerHTML = "";
+      leaderboardRefresh.disabled = true;
+
+      const callbackName =
+        "__mouseLeaderboard_" +
+        Date.now() +
+        "_" +
+        Math.floor(Math.random() * 100000);
+
+      const script = document.createElement("script");
+      let finished = false;
+
+      function cleanup() {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+
+        try {
+          delete window[callbackName];
+        } catch (_) {
+          window[callbackName] = undefined;
+        }
+
+        leaderboardRefresh.disabled = false;
+      }
+
+      const timeoutId = window.setTimeout(() => {
+        if (finished) return;
+
+        finished = true;
+        cleanup();
+
+        leaderboardStatus.textContent =
+          "⚠ 暫時未能載入龍虎榜，請稍後再試。";
+      }, 10000);
+
+      window[callbackName] = payload => {
+        if (finished) return;
+
+        finished = true;
+        window.clearTimeout(timeoutId);
+        cleanup();
+
+        renderLeaderboard(payload);
+      };
+
+      script.onerror = () => {
+        if (finished) return;
+
+        finished = true;
+        window.clearTimeout(timeoutId);
+        cleanup();
+
+        leaderboardStatus.textContent =
+          "⚠ 龍虎榜連線失敗，請檢查 Apps Script 部署。";
+      };
+
+      const url =
+        SCORE_API +
+        "?action=leaderboard" +
+        "&mode=" + encodeURIComponent(mode) +
+        "&difficulty=" + encodeURIComponent(difficulty) +
+        "&callback=" + encodeURIComponent(callbackName) +
+        "&_=" + Date.now();
+
+      script.src = url;
+      script.async = true;
+
+      document.head.appendChild(script);
+    }
+
+
+    function renderLeaderboard(payload) {
+      leaderboardList.innerHTML = "";
+
+      if (!payload || payload.ok !== true) {
+        leaderboardStatus.textContent =
+          "⚠ 未能取得排名資料。";
+        return;
+      }
+
+      const leaders = Array.isArray(payload.leaders)
+        ? payload.leaders
+        : [];
+
+      if (leaders.length === 0) {
+        leaderboardStatus.textContent =
+          "這個模式及難度暫時未有成績。";
+        return;
+      }
+
+      leaderboardStatus.textContent =
+        `顯示 Top ${leaders.length}`;
+
+      leaders.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "leader-row";
+
+        if (item.rank === 1) row.classList.add("top-1");
+        if (item.rank === 2) row.classList.add("top-2");
+        if (item.rank === 3) row.classList.add("top-3");
+
+        const rank = document.createElement("div");
+        rank.className = "leader-rank";
+
+        if (item.rank === 1) {
+          rank.textContent = "🥇";
+        } else if (item.rank === 2) {
+          rank.textContent = "🥈";
+        } else if (item.rank === 3) {
+          rank.textContent = "🥉";
+        } else {
+          rank.textContent = String(item.rank);
+        }
+
+        const student = document.createElement("div");
+        student.className = "leader-student";
+        student.textContent = String(item.student ?? "—");
+
+        const scoreEl = document.createElement("div");
+        scoreEl.className = "leader-score";
+        scoreEl.textContent = `${Number(item.score) || 0} 分`;
+
+        row.appendChild(rank);
+        row.appendChild(student);
+        row.appendChild(scoreEl);
+
+        leaderboardList.appendChild(row);
+      });
+    }
+
+
+    async function submitScore() {
+      if (scoreSubmitted) return;
+      scoreSubmitted = true;
+
+      const status = document.getElementById("submitStatus");
+      if (status) {
+        status.className = "submit-status";
+        status.textContent = "☁️ 成績提交中…";
+      }
+
+      const data = new URLSearchParams();
+      data.append("className", gameStudentClass);
+      data.append("studentNo", gameStudentNo);
+      data.append("name", gameStudentName);
+      data.append("mode", currentMode);
+      data.append("difficulty", gameDifficulty);
+      data.append("score", String(score));
+
+      try {
+        await fetch(SCORE_API, {
+          method: "POST",
+          body: data,
+          mode: "no-cors"
+        });
+
+        if (status) {
+          status.className = "submit-status sent";
+          status.textContent = "✓ 成績已送出，可查看龍虎榜";
+        }
+      } catch (error) {
+        console.error("提交成績失敗：", error);
+        scoreSubmitted = false;
+
+        if (status) {
+          status.className = "submit-status failed";
+          status.textContent = "⚠ 成績未能送出，請通知老師";
+        }
+      }
+    }
+
+    function endGame() {
+      if (!isPlaying) return;
+
+      clearInterval(timer);
+      timer = null;
+      isPlaying = false;
+      isDragging = false;
+      activePointerId = null;
+
+      hideAllGameObjects();
+      gameArea.classList.remove("playing");
+      timeInfo.classList.remove("danger", "timer-pulse");
+
+      startBtn.disabled = false;
+      resetBtn.disabled = false;
+      difficultySelect.disabled = false;
+      modeSelect.disabled = false;
+      studentClassInput.disabled = false;
+      studentNoInput.disabled = false;
+      studentNameInput.disabled = false;
+      studentPanel.classList.remove("locked");
+
+      let comment = "";
+      let stars = 1;
+      let emoji = "🌟";
+
+      if (score >= 25) {
+        comment = "太厲害了！你的滑鼠控制能力非常好。";
+        stars = 3;
+        emoji = "🏆";
+      } else if (score >= 15) {
+        comment = "表現不錯！繼續練習會更準。";
+        stars = 2;
+        emoji = "🎉";
+      } else {
+        comment = "已經完成練習！慢慢來，準確比速度更重要。";
+      }
+
+      const starsHtml = Array.from({ length: stars }, () => "<span>⭐</span>").join("");
+
+      message.innerHTML = `
+        <div class="result-card">
+          <div class="result-emoji">${emoji}</div>
+          <h2 class="result-title">練習完成！</h2>
+          <div class="result-mode-name">${modeNames[currentMode]} · ${difficultySettings[difficultySelect.value].name}</div>
+          <div class="result-stars">${starsHtml}</div>
+          <div class="score-caption">你的得分</div>
+          <div class="final-score-wrap">
+            <span id="finalScore">0</span>
+            <span class="score-unit">分</span>
+          </div>
+          <div class="result-comment">${comment}</div>
+          <div class="result-student">${gameStudentName} · ${gameStudentClass} · 學號 ${gameStudentNo}</div>
+          <div class="submit-status" id="submitStatus">☁️ 成績提交中…</div>
+          <div class="result-hint">可以按上方「重新開始」再挑戰一次</div>
+        </div>
+      `;
+
+      message.classList.add("result-mode");
+      message.style.display = "flex";
+      feedback.textContent = "";
+
+      animateFinalScore(score);
+      submitScore();
+
+      if (score >= 15) {
+        launchConfetti(score >= 25 ? 82 : 54);
+      } else {
+        launchConfetti(28);
+      }
+    }
+
+    function animateFinalScore(finalValue) {
+      const finalScore = document.getElementById("finalScore");
+      if (!finalScore) return;
+
+      const duration = 920;
+      const start = performance.now();
+
+      function frame(now) {
+        const progress = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const shown = Math.round(finalValue * eased);
+
+        finalScore.textContent = shown;
+
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          finalScore.textContent = finalValue;
+          restartAnimation(finalScore, "finish-pop");
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function launchConfetti(amount) {
+      const colors = ["#2563eb", "#7c3aed", "#f59e0b", "#16a34a", "#f97316", "#ec4899", "#06b6d4"];
+
+      for (let i = 0; i < amount; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti";
+
+        piece.style.left = randomNumber(3, 97) + "%";
+        piece.style.background = colors[randomNumber(0, colors.length - 1)];
+        piece.style.setProperty("--duration", (1.45 + Math.random() * 1.25).toFixed(2) + "s");
+        piece.style.setProperty("--delay", (Math.random() * .65).toFixed(2) + "s");
+        piece.style.setProperty("--drift", randomNumber(-130, 130) + "px");
+        piece.style.setProperty("--spin", randomNumber(-760, 760) + "deg");
+        piece.style.width = randomNumber(7, 12) + "px";
+        piece.style.height = randomNumber(10, 18) + "px";
+
+        gameArea.appendChild(piece);
+        window.setTimeout(() => piece.remove(), 3400);
+      }
+    }
+
+    function resetGame() {
+      clearInterval(timer);
+      timer = null;
+
+      score = 0;
+      timeLeft = 30;
+      isPlaying = false;
+      isDragging = false;
+      activePointerId = null;
+
+      scoreDisplay.textContent = score;
+      timeDisplay.textContent = timeLeft;
+
+      hideAllGameObjects();
+      removeEffects();
+
+      gameArea.classList.remove("playing");
+      timeInfo.classList.remove("danger", "timer-pulse");
+      message.classList.remove("result-mode");
+
+      startBtn.disabled = false;
+      resetBtn.disabled = true;
+      difficultySelect.disabled = false;
+      modeSelect.disabled = false;
+      studentClassInput.disabled = false;
+      studentNoInput.disabled = false;
+      studentNameInput.disabled = false;
+      studentPanel.classList.remove("locked");
+      identityError.textContent = "";
+      scoreSubmitted = false;
+
+      feedback.textContent = "";
+
+      message.innerHTML = `
+        <h2>準備好了嗎？</h2>
+        <p>選擇練習模式後，按下「開始練習」。你可以練習點擊、雙擊、拖拉，也可以練習右鍵選單操作。</p>
+      `;
+      message.style.display = "flex";
+    }
+
+    function removeEffects() {
+      gameArea.querySelectorAll(".fx-ripple, .fx-plus, .confetti").forEach(el => el.remove());
+    }
+
+    function restartAnimation(element, className) {
+      element.classList.remove(className);
+      void element.offsetWidth;
+      element.classList.add(className);
+    }
+
+    function randomNumber(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      if (max < min) return min;
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    studentNoInput.addEventListener("input", () => {
+      studentNoInput.value = studentNoInput.value.replace(/\D/g, "").slice(0, 3);
+      identityError.textContent = "";
+    });
+
+    studentClassInput.addEventListener("input", () => {
+      identityError.textContent = "";
+    });
+
+    studentNameInput.addEventListener("input", () => {
+      identityError.textContent = "";
+    });
+
+    leaderboardBtn.addEventListener("click", openLeaderboard);
+    leaderboardClose.addEventListener("click", closeLeaderboard);
+    leaderboardRefresh.addEventListener("click", loadLeaderboard);
+    leaderboardMode.addEventListener("change", loadLeaderboard);
+    leaderboardDifficulty.addEventListener("change", loadLeaderboard);
+
+    leaderboardOverlay.addEventListener("click", event => {
+      if (event.target === leaderboardOverlay) {
+        closeLeaderboard();
+      }
+    });
+
+    document.addEventListener("keydown", event => {
+      if (
+        event.key === "Escape" &&
+        leaderboardOverlay.classList.contains("show")
+      ) {
+        closeLeaderboard();
+      }
+    });
+
+    startBtn.addEventListener("click", startGame);
+    resetBtn.addEventListener("click", resetGame);
+
+    target.addEventListener("click", hitTarget);
+    target.addEventListener("dblclick", hitDoubleClickTarget);
+    gameArea.addEventListener("click", handleGameAreaClick);
+
+    dragItem.addEventListener("pointerdown", startDragging);
+    document.addEventListener("pointermove", dragging, { passive: false });
+    document.addEventListener("pointerup", stopDragging);
+    document.addEventListener("pointercancel", stopDragging);
+
+    rightClickBox.addEventListener("contextmenu", showCustomMenu);
+
+    gameArea.addEventListener("contextmenu", event => {
+      const valid =
+        currentMode === "rightClick" ||
+        (currentMode === "challenge" && challengeTask === "rightClick");
+
+      if (isPlaying && valid) {
+        event.preventDefault();
+
+        if (event.target !== rightClickBox) {
+          customMenu.style.display = "none";
+          customMenu.classList.remove("menu-open");
+          setFeedback("請在紫色方格上按右鍵。");
+        }
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (!isPlaying) return;
+
+      if (currentMode === "click") {
+        moveTarget(targetSize);
+      } else if (currentMode === "doubleClick") {
+        moveTarget(doubleClickTargetSize);
+      } else if (currentMode === "drag") {
+        placeDragRound();
+      } else if (currentMode === "rightClick") {
+        prepareRightClickRound();
+      }
+    });
+  </script>
+</body>
+</html>
